@@ -8,7 +8,7 @@ on:
       - main
 
 jobs:
-  build-test: 
+  build-test-client: 
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: client/package-lock.json
 
       - name: Show Node / npm versions (debug)
         run: |
@@ -31,21 +31,61 @@ jobs:
           npm --version
           npm config get registry
 
-      - name: Install dependencies
+      - name: Install dependencies (client)
         run: npm ci
+        working-directory: client
 
-      - name: Run security audit
-        run: npm audit --audit-level=moderate
-
-      - name: Run linter (if available)
+      - name: Run linter (client)
         run: npm run lint --if-present
+        working-directory: client
 
-      - name:  Run build (if available)
+      - name: Run build (client)
         run: npm run build --if-present
+        working-directory: client
 
-      - name:  Run tests
+      - name: Run tests (client)
         run: npm test
+        working-directory: client
 
-      - name: Upload coverage (if available)
-        if: always()
-        run: npm run coverage --if-present
+  build-test-server: 
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: 
+        node-version: [16.x, 18.x, 20.x]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Show Node / npm versions (debug)
+        run: |
+          node --version
+          npm --version
+          npm config get registry
+
+      - name: Install dependencies (server)
+        run: npm ci
+        working-directory: server
+
+      - name: Run security audit (server)
+        run: npm audit --audit-level=moderate
+        working-directory: server
+
+      - name: Run linter (server)
+        run: npm run lint --if-present
+        working-directory: server
+
+      - name: Run build (server)
+        run: npm run build --if-present
+        working-directory: server
+
+      - name: Run tests (server)
+        run: npm test
+        working-directory: server
